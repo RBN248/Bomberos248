@@ -71,12 +71,13 @@ class ParteServicio(db.Model):
     dc_movil = db.Column(db.String(50))
     dc_cargo = db.Column(db.String(100))
     dc_obs = db.Column(db.Text)
+    tareas_realizadas = db.Column(db.Text)
     estado = db.Column(db.String(20), default="En curso")
 
 class DotacionMovil(db.Model):
     __tablename__ = 'dotaciones_moviles'
     id = db.Column(db.Integer, primary_key=True)
-    parte_id = db.Column(db.Integer, db.ForeignKey('partes_servicio.id'))
+    parte_id = db.Column(db.Integer, db.ForeignKey('parte_servicio.id'))
     movil_id = db.Column(db.Integer, db.ForeignKey('moviles.id'))
     bombero_numero = db.Column(db.String(20), db.ForeignKey('bomberos.numero'))
     rol_en_unidad = db.Column(db.String(50))
@@ -124,8 +125,8 @@ def index():
         # Buscamos en la dotación de cada parte activo
         dotacion = DotacionMovil.query.filter_by(parte_id=p.id).all()
         for d in dotacion:
-            if d.bombero_id:
-                legajos_ocupados.append(str(d.bombero_id))
+            if d.bombero_numero:
+                legajos_ocupados.append(str(d.bombero_numero))
 
     presentes_validos = [p for p in presentes if p.bombero is not None]
     
@@ -282,11 +283,11 @@ def cargar_dotacion(parte_id):
         if bombero_id and movil_db_id:
             # 1. VALIDACIÓN DE SEGURIDAD: ¿El bombero ya está asignado a este servicio?
             # Buscamos si ya existe en cualquier móvil de este mismo parte
-            asignacion_previa = DotacionMovil.query.filter_by(parte_id=parte_id, bombero_id=bombero_id).first()
+            asignacion_previa = DotacionMovil.query.filter_by(parte_id=parte_id, bombero_numero=bombero_id).first()
             
             if asignacion_previa:
                 # Si ya existe, obtenemos el número del móvil para avisar
-                m_error = db.session.get(Movil, asignacion_previa.nro_movil)
+                m_error = db.session.get(Movil, asignacion_previa.movil_id)
                 nro_m = m_error.numero if m_error else "otro"
                 flash(f"⚠️ ERROR: El bombero ya está asignado al Móvil {nro_m} en este servicio.")
                 return redirect(url_for('cargar_dotacion', parte_id=parte_id))
@@ -299,8 +300,8 @@ def cargar_dotacion(parte_id):
             # IMPORTANTE: Guardamos el ID del móvil que viene del SELECT
             nueva_dotacion = DotacionMovil(
                 parte_id=parte_id,
-                nro_movil=movil_db_id, 
-                bombero_id=bombero_id,
+                movil_id=movil_db_id, 
+                bombero_numero=bombero_id,
                 rol_en_unidad=rol_elegido
             )
             
@@ -385,8 +386,8 @@ def monitor():
     for s in servicios:
         dotacion = DotacionMovil.query.filter_by(parte_id=s.id).all()
         for d in dotacion:
-            if d.bombero_id:
-                legajos_en_servicio.append(str(d.bombero_id))
+            if d.bombero_numero:
+                legajos_en_servicio.append(str(d.bombero_numero))
     
     # 3. Traemos a todos los que marcaron entrada y NO salida (Están en el cuartel)
     asistencias_activas = AsistenciaCuartel.query.filter_by(hora_salida=None).all()
@@ -423,15 +424,6 @@ def registrar_tiempo(dotacion_id, tipo):
     return redirect(url_for('gestionar_dotacion', parte_id=reg.parte_id))
 
 
-
-@login_manager.user_loader
-def load_user(user_id):
-    return Usuario.query.get(int(user_id))
-
-# --- RUTAS ---
-
-
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -441,71 +433,6 @@ def login():
             return redirect(url_for('index'))
         flash('Usuario o clave incorrecta')
     return render_template('login.html')
-
-@app.route('/nuevo_servicio', methods=['GET', 'POST'])
-@login_required
-def nuevo_servicio():
-    if request.method == 'POST':
-        ultimo = ParteServicio.query.order_by(ParteServicio.id.desc()).first()
-        nuevo_nro = (int(ultimo.nro_acta) + 1) if ultimo else 1
-        
-        nuevo = ParteServicio(
-            nro_acta=str(nuevo_nro).zfill(4),
-            tipo_siniestro=request.form['tipo_siniestro'],
-            ubicacion=request.form['ubicacion']
-        )
-        db.session.add(nuevo)
-        db.session.commit()
-        return redirect(url_for('gestionar_dotacion', parte_id=nuevo.id))
-    return render_template('nuevo_servicio.html')
-
-@app.route('/servicio/<int:parte_id>/dotacion', methods=['GET', 'POST'])
-@login_required
-def gestionar_dotacion(parte_id):
-    parte = ParteServicio.query.get_or_404(parte_id)
-    
-    if request.method == 'POST':
-        movil_id = request.form['movil_id']
-        b_num = request.form['bombero_numero']
-
-        # CANDADO PUNTO 2: ¿El bombero está en un servicio activo y no regresó?
-        ocupado = DotacionMovil.query.join(ParteServicio).filter(
-            DotacionMovil.bombero_numero == b_num,
-            ParteServicio.estado == "En curso",
-            DotacionMovil.hora_regreso == None
-        ).first()
-
-        if ocupado:
-            flash(f'ERROR: El bombero {b_num} ya está en el Móvil {ocupado.movil.numero}')
-            return redirect(url_for('gestionar_dotacion', parte_id=parte.id))
-        
-        nueva_dot = DotacionMovil(
-            parte_id=parte.id,
-            movil_id=movil_id,
-            bombero_numero=b_num,
-            rol_en_unidad=request.form.get('rol', 'Cuerpo Activo')
-        )
-        db.session.add(nueva_dot)
-        db.session.commit()
-        flash('Personal añadido')
-        return redirect(url_for('gestionar_dotacion', parte_id=parte.id))
-    
-    moviles = Movil.query.filter_by(estado="Activo").all()
-    bomberos = Bombero.query.filter_by(estado="Activo").all()
-    dotacion_actual = DotacionMovil.query.filter_by(parte_id=parte_id).all()
-    
-    return render_template('dotacion.html', parte=parte, moviles=moviles, bomberos=bomberos, dotacion=dotacion_actual)
-
-@app.route('/registrar_tiempo/<int:dotacion_id>/<tipo>')
-@login_required
-def registrar_tiempo(dotacion_id, tipo):
-    reg = DotacionMovil.query.get_or_404(dotacion_id)
-    ahora = datetime.now()
-    if tipo == 'salida': reg.hora_salida = ahora
-    elif tipo == 'llegada': reg.hora_llegada = ahora
-    elif tipo == 'regreso': reg.hora_regreso = ahora
-    db.session.commit()
-    return redirect(url_for('gestionar_dotacion', parte_id=reg.parte_id))
 
 # --- ESTO VA AL FINAL DE TU ARCHIVO DE 600+ LÍNEAS ---
 
