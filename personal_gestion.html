@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Personal - Bomberos</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; padding: 20px; color: #333; }
+        .container { max-width: 1100px; margin: auto; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        h2 { color: #CC0000; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        label { display: block; font-weight: bold; margin: 10px 0 5px 0; font-size: 0.9em; }
+        
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        
+        .btn { padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; text-decoration: none; display: inline-block; text-align: center; }
+        .btn-guardia { background: #333; color: white; width: 100%; margin-top: 15px; }
+        .btn-licencia { background: #CC0000; color: white; width: 100%; margin-top: 15px; }
+        
+        .flash-messages { margin-bottom: 20px; }
+        .flash { padding: 15px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 8px; font-weight: bold; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
+        th { background: #eee; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8em; }
+        .badge-sancion { background: #fff3cd; color: #856404; }
+        .badge-licencia { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1>📋 Gestión de Guardias y Estados</h1>
+        <a href="/" style="font-weight: bold; color: #666; text-decoration: none;">⬅️ Volver al Panel</a>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for message in messages %}<div class="flash">✅ {{ message }}</div>{% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="grid">
+        <div class="card">
+            <h2>📅 Asignar Guardia</h2>
+            <form method="POST">
+                <input type="hidden" name="add_guardia" value="1">
+                <label>Bombero:</label>
+                <select name="bombero_numero" required>
+                    {% for b in bomberos %}<option value="{{ b.numero }}">{{ b.apellido }}, {{ b.nombre }}</option>{% endfor %}
+                </select>
+                <label>Fecha:</label>
+                <input type="date" name="fecha" value="{{ datetime_hoy }}" required>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div><label>Desde:</label><input type="time" name="desde" value="21:00"></div>
+                    <div><label>Hasta:</label><input type="time" name="hasta" value="08:00"></div>
+                </div>
+                <button type="submit" class="btn btn-guardia">REGISTRAR GUARDIA</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>🚑 Licencias y Sanciones</h2>
+            <form method="POST">
+                <input type="hidden" name="add_licencia" value="1">
+                <label>Bombero:</label>
+                <select name="bombero_numero" required>
+                    {% for b in bomberos %}<option value="{{ b.numero }}">{{ b.apellido }}, {{ b.nombre }}</option>{% endfor %}
+                </select>
+                <label>Tipo de Estado:</label>
+                <select name="tipo">
+                    <option value="Licencia Anual">Licencia Anual</option>
+                    <option value="Licencia Médica">Licencia Médica</option>
+                    <option value="Sanción">Sanción</option>
+                    <option value="Extraordinaria">Extraordinaria</option>
+                </select>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div><label>Fecha Inicio:</label><input type="date" name="f_inicio" value="{{ datetime_hoy }}" required></div>
+                    <div><label>Fecha Fin:</label><input type="date" name="f_fin" required></div>
+                </div>
+                <label>Comentarios / Motivo:</label>
+                <textarea name="comentarios" rows="2"></textarea>
+                <button type="submit" class="btn btn-licencia">REGISTRAR ESTADO</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+        <h2>📋 Estados y Licencias Activas</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Bombero</th>
+                    <th>Tipo</th>
+                    <th>Desde</th>
+                    <th>Hasta</th>
+                    <th>Comentarios</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lic in licencias %}
+                <tr>
+                    <td><strong>{{ lic.bombero.apellido }}</strong></td>
+                    <td><span class="badge {% if lic.tipo == 'Sanción' %}badge-sancion{% else %}badge-licencia{% endif %}">{{ lic.tipo }}</span></td>
+                    <td>{{ lic.fecha_inicio.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ lic.fecha_fin.strftime('%d/%m/%Y') }}</td>
+                    <td><small>{{ lic.comentarios }}</small></td>
+                    <td><a href="#" style="color: #666;">🔍 Detalle</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card" style="margin-top: 20px; border-top: 5px solid #333;">
+        <h2>📅 Cronograma de Guardias (Próximos días)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Bombero</th>
+                    <th>Horario</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for g in guardias %}
+                <tr>
+                    <td><strong>{{ g.fecha.strftime('%d/%m/%Y') }}</strong></td>
+                    <td>{{ g.bombero.apellido }}, {{ g.bombero.nombre }}</td>
+                    <td><span class="badge" style="background: #eee; color: #333;">{{ g.hora_inicio }} a {{ g.hora_fin }} hs</span></td>
+                    <td>
+                        <a href="/personal/borrar_guardia/{{ g.id }}" style="color: #CC0000; text-decoration: none; font-weight: bold;" onclick="return confirm('¿Eliminar esta guardia?')">🗑️ Quitar</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="text-align: center; color: #999; padding: 20px;">No hay guardias programadas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+</body>
+</html>

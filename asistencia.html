@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Asistencia - Bomberos Mariano Acosta</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #222; margin: 0; padding: 20px; color: white; }
+        .container { max-width: 800px; margin: auto; background: #fff; color: #333; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { color: #CC0000; border-bottom: 3px solid #CC0000; padding-bottom: 10px; margin-top: 0; }
+        
+        .form-asistencia { background: #f4f4f4; padding: 20px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 30px; display: flex; gap: 10px; align-items: flex-end; }
+        .input-group { flex: 1; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9em; }
+        
+        input[type="number"], select { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 1.1em; box-sizing: border-box; }
+        
+        .btn-entrada { background: #28a745; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1em; height: 48px; }
+        .btn-entrada:hover { background: #218838; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #333; color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        
+        .btn-salida { background: #CC0000; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        
+        .volver { display: inline-block; margin-top: 20px; color: #666; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div style="background: #ffcccc; color: #cc0000; padding: 10px; border: 1px solid #cc0000; border-radius: 5px; margin-bottom: 15px;">
+                    ⚠️ {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h2>🕒 Control de Asistencia</h2>
+    
+    <div class="form-asistencia">
+        <form method="POST" style="display: contents;">
+            <div class="input-group" style="flex: 0.4;">
+                <label>Nro. de Legajo:</label>
+                <input type="number" name="bombero_id" placeholder="Ej: 101" required autofocus>
+            </div>
+            
+            <div class="input-group">
+                <label>O seleccionar de la lista:</label>
+                <select name="bombero_id_select" onchange="document.getElementsByName('bombero_id')[0].value=this.value">
+                    <option value="">-- Seleccionar de la lista --</option>
+                    {% for b in bomberos %}
+                    <option value="{{ b.numero }}">
+                        [{{ b.jerarquia.nombre if b.jerarquia else 'S/J' }}] {{ b.apellido }}, {{ b.nombre }} (L: {{ b.numero }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" name="accion" value="entrada" class="btn-entrada">REGISTRAR</button>
+        </form>
+    </div>
+
+    <h3>📍 Personal en Cuartel</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Legajo</th>
+                <th>Bombero</th>
+                <th>Ingreso</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in presentes %}
+            <tr>
+                <td><strong>#{{ p.bombero.numero }}</strong></td>
+                <td>{{ p.bombero.apellido }}, {{ p.bombero.nombre }}</td>
+                <td>{{ p.hora_entrada.strftime('%H:%M') }} hs</td>
+                <td>
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="bombero_id" value="{{ p.bombero_numero }}">
+                        <button type="submit" name="accion" value="salida" class="btn-salida">MARCAR SALIDA</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: #999; padding: 20px;">No hay personal en el cuartel.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('index') }}" class="volver">⬅️ Volver al Panel Operativo</a>
+</div>
+
+</body>
+</html>

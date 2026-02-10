@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dotación - Acta {{ parte.nro_acta }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --rojo: #CC0000; --verde: #28a745; --azul: #007bff; --oscuro: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; padding: 20px; }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: var(--rojo); border-bottom: 2px solid #eee; }
+        .grid-form { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: var(--oscuro); color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #ddd; }
+        .btn { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; text-decoration: none; font-size: 0.9em; }
+        .btn-salida { background: var(--rojo); }
+        .btn-llegada { background: var(--azul); }
+        .btn-regreso { background: var(--verde); }
+        .time-badge { font-family: monospace; font-weight: bold; background: #eee; padding: 4px 8px; border-radius: 4px; color: #555; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="/" style="text-decoration: none; color: #666;">⬅ Volver al Panel</a>
+    <h2>Gestión de Dotación - Acta #{{ parte.nro_acta }}</h2>
+    <p><strong>Tipo:</strong> {{ parte.tipo_siniestro }} | <strong>Ubicación:</strong> {{ parte.ubicacion }}</p>
+
+    <form method="POST" class="grid-form">
+        <div>
+            <label>Móvil</label>
+            <select name="movil_id" required style="width:100%; padding:8px;">
+                {% for m in moviles %}
+                <option value="{{ m.id }}">Móvil {{ m.numero }} - {{ m.descripcion }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Bombero</label>
+            <select name="bombero_numero" required style="width:100%; padding:8px;">
+                {% for b in bomberos %}
+                <option value="{{ b.numero }}">{{ b.apellido }}, {{ b.nombre }} (#{{ b.numero }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Rol</label>
+            <select name="rol" style="width:100%; padding:8px;">
+                <option value="Cuerpo Activo">Cuerpo Activo</option>
+                <option value="Chofer">Chofer</option>
+                <option value="Jefe de Dotación">Jefe de Dotación</option>
+            </select>
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+            <button type="submit" class="btn" style="background:var(--oscuro); width:100%; height:38px;">AÑADIR A UNIDAD</button>
+        </div>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Móvil</th>
+                <th>Personal</th>
+                <th>Rol</th>
+                <th>Tiempos (Salida / Llegada / Regreso)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in dotacion %}
+            <tr>
+                <td><strong>Móvil {{ d.movil.numero }}</strong></td>
+                <td>{{ d.bombero.apellido }}, {{ d.bombero.nombre }}</td>
+                <td>{{ d.rol_en_unidad }}</td>
+                <td>
+                    {% if not d.hora_salida %}
+                        <a href="/registrar_tiempo/{{ d.id }}/salida" class="btn btn-salida">SALIDA</a>
+                    {% else %}
+                        <span class="time-badge">{{ d.hora_salida.strftime('%H:%M') }}</span>
+                    {% endif %}
+
+                    {% if d.hora_salida and not d.hora_llegada %}
+                        <a href="/registrar_tiempo/{{ d.id }}/llegada" class="btn btn-llegada">EN SINIESTRO</a>
+                    {% elif d.hora_llegada %}
+                        <span class="time-badge">{{ d.hora_llegada.strftime('%H:%M') }}</span>
+                    {% endif %}
+
+                    {% if d.hora_llegada and not d.hora_regreso %}
+                        <a href="/registrar_tiempo/{{ d.id }}/regreso" class="btn btn-regreso">REGRESO</a>
+                    {% elif d.hora_regreso %}
+                        <span class="time-badge">{{ d.hora_regreso.strftime('%H:%M') }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Dotación - Acta {{ parte.nro_acta }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --rojo: #CC0000; --verde: #28a745; --gris-oscuro: #333; --fondo: #f4f4f4; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        .header-acciones { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ddd;
+        }
+
+        .flash { padding: 12px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 5px; text-align: center; font-weight: bold; margin-bottom: 20px; }
+        .flash-error { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+
+        .seccion-bloque { background: #ffffff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .border-rojo { border-left: 10px solid var(--rojo); }
+        .bg-informe { background: #fffcf0; border-color: #f1e09a; }
+        
+        .grid-3 { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 15px; }
+        
+        h2 { color: var(--rojo); border-bottom: 2px solid var(--rojo); padding-bottom: 5px; margin-top: 0; margin-bottom: 15px; font-size: 1.2em; }
+        label { font-weight: bold; font-size: 0.85em; display: block; margin-bottom: 5px; color: #555; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        .btn { padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; text-decoration: none; display: inline-block; transition: 0.3s; }
+        .btn-save { background: var(--verde); color: white; }
+        .btn-back { background: #666; color: white; }
+        .btn-add { background: var(--rojo); color: white; margin-top: 10px; }
+        .btn-del { background: #dc3545; color: white; padding: 5px 10px; font-size: 0.8em; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { background: var(--gris-oscuro); color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="flash {{ 'flash-error' if 'ERROR' in message or '❌' in message }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('cargar_dotacion', parte_id=parte.id) }}" method="POST">
+        <input type="hidden" name="guardar_informe" value="1">
+        
+        <div class="header-acciones">
+            <div>
+                <h1 style="margin:0; font-size: 1.5em;">🚒 Acta: {{ parte.nro_acta }}</h1>
+                <small>Servicio: <b>{{ parte.tipo_siniestro }}</b></small>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <a href="/" class="btn btn-back">⬅️ VOLVER</a>
+                <button type="submit" class="btn btn-save">💾 GUARDAR CAMBIOS TÉCNICOS</button>
+            </div>
+        </div>
+
+        <div class="seccion-bloque border-rojo">
+            <h2><i class="fa fa-phone"></i> Datos de Cabecera (Editables)</h2>
+            <div class="grid-3">
+                <div>
+                    <label>Denunciante:</label>
+                    <input type="text" name="denunciante_nombre" value="{{ parte.denunciante_nombre or '' }}">
+                </div>
+                <div>
+                    <label>Teléfono:</label>
+                    <input type="text" name="denunciante_tel" value="{{ parte.denunciante_tel or '' }}">
+                </div>
+                <div>
+                    <label>Hora de Llamada:</label>
+                    <input type="time" name="hora_denuncia_str" value="{{ parte.hora_denuncia.strftime('%H:%M') if parte.hora_denuncia }}">
+                </div>
+            </div>
+            <div class="grid-2">
+                <div>
+                    <label>Tipo de Siniestro:</label>
+                    <input type="text" name="tipo_siniestro" value="{{ parte.tipo_siniestro or '' }}">
+                </div>
+                <div>
+                    <label>Ubicación / Dirección:</label>
+                    <input type="text" name="ubicacion" value="{{ parte.ubicacion or '' }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="seccion-bloque bg-informe">
+            <h2><i class="fa fa-file-alt"></i> Informe Técnico</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <label>Panorama:</label>
+                    <textarea name="panorama" rows="3">{{ parte.panorama or '' }}</textarea>
+                </div>
+                <div>
+                    <label>Disposiciones:</label>
+                    <textarea name="disposiciones" rows="3">{{ parte.disposiciones or '' }}</textarea>
+                </div>
+            </div>
+            
+            <h2 style="margin-top:20px; font-size:1em;">🚑 Personal Externo</h2>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                <div>
+                    <label>POLICÍA:</label>
+                    <input type="text" name="pol_movil" value="{{ parte.pol_movil or '' }}" placeholder="Móvil" style="margin-bottom:5px;">
+                    <input type="text" name="pol_cargo" value="{{ parte.pol_cargo or '' }}" placeholder="Cargo">
+                </div>
+                <div>
+                    <label>AMBULANCIA:</label>
+                    <input type="text" name="amb_movil" value="{{ parte.amb_movil or '' }}" placeholder="Móvil" style="margin-bottom:5px;">
+                    <input type="text" name="amb_cargo" value="{{ parte.amb_cargo or '' }}" placeholder="Cargo">
+                </div>
+                <div>
+                    <label>DC / OTROS:</label>
+                    <input type="text" name="dc_movil" value="{{ parte.dc_movil or '' }}" placeholder="Móvil" style="margin-bottom:5px;">
+                    <input type="text" name="dc_cargo" value="{{ parte.dc_cargo or '' }}" placeholder="Cargo">
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <hr style="margin: 30px 0; border: 0; border-top: 2px dashed #eee;">
+
+    <div class="seccion-bloque">
+        <h2><i class="fa fa-users"></i> Dotación de Personal</h2>
+        
+        <form method="POST">
+            <div style="display: grid; grid-template-columns: 2fr 1.5fr 1.5fr 1fr; gap: 10px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                <div>
+                    <label>Bombero:</label>
+                    <select name="bombero_id" required>
+                        <option value="">Seleccionar...</option>
+                        {% for b in bomberos %}<option value="{{ b.numero }}">{{ b.apellido }}, {{ b.nombre }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Móvil:</label>
+                    <select name="movil_id" required>
+                        {% for m in moviles %}<option value="{{ m.id }}">Móvil {{ m.numero }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Función:</label>
+                    <select name="rol">
+                        <option value="Personal de Dotación">Personal de Dotación</option>
+                        <option value="Jefe de Dotación">Jefe de Dotación</option>
+                        <option value="Chofer">Chofer</option>
+                    </select>
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                    <button type="submit" class="btn btn-add" style="width: 100%;">AÑADIR</button>
+                </div>
+            </div>
+        </form>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Móvil</th>
+                    <th>Personal</th>
+                    <th>Función</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if dotacion %}
+                    {% for d in dotacion %}
+                    <tr>
+                        <td><strong>Móvil {{ d.movil.numero }}</strong></td>
+                        <td>{{ d.bombero.apellido }}, {{ d.bombero.nombre }}</td>
+                        <td>{{ d.rol_en_unidad }}</td>
+                        <td><a href="/eliminar_dotacion/{{ d.id }}" class="btn btn-del">Quitar</a></td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align:center; padding: 20px; color: #888;">No hay personal cargado en este servicio.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

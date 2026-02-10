@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Estadísticas de Personal - Bomberos</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; padding: 20px; color: #333; }
+        .container { max-width: 1300px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        h2 { color: #CC0000; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        
+        .filtros { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px; display: flex; gap: 20px; align-items: flex-end; border: 1px solid #ddd; }
+        .filtros div { flex-grow: 1; }
+        
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; color: #555; }
+        input[type="date"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
+        th { background: #333; color: white; padding: 12px 8px; text-align: center; border: 1px solid #444; }
+        td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; border-left: 1px solid #f9f9f9; }
+        
+        tr:hover { background-color: #f1f1f1; }
+        
+        /* Colores para indicadores */
+        .col-guardia { background-color: #eef6ff; color: #0056b3; font-weight: bold; }
+        .col-voluntaria { background-color: #fff9eb; color: #856404; font-weight: bold; }
+        .col-total { background-color: #f0fff4; color: #1e7e34; font-weight: bold; font-size: 1.1em; }
+        
+        .negativo { color: #dc3545; font-weight: bold; }
+        .positivo { color: #28a745; font-weight: bold; }
+
+        .btn { padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; border: none; cursor: pointer; display: inline-block; }
+        .btn-filter { background: #CC0000; color: white; }
+        .btn-print { background: #333; color: white; }
+        .btn-back { background: #666; color: white; }
+
+        .novedad-icon { color: #f29900; cursor: help; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h2>📊 Rendimiento y Estadísticas Operativas</h2>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="window.print()" class="btn btn-print">🖨️ Imprimir / PDF</button>
+            <a href="/" class="btn btn-back">⬅️ Volver al Panel</a>
+        </div>
+    </div>
+
+    <form class="filtros" method="GET">
+        <div>
+            <label>Fecha Desde:</label>
+            <input type="date" name="desde" value="{{ desde }}">
+        </div>
+        <div>
+            <label>Fecha Hasta:</label>
+            <input type="date" name="hasta" value="{{ hasta }}">
+        </div>
+        <button type="submit" class="btn btn-filter">🔍 Calcular Estadísticas</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th rowspan="2">Nro</th>
+                <th rowspan="2">Bombero (Apellido y Nombre)</th>
+                <th colspan="3">Desglose de Salidas</th>
+                <th rowspan="2">Horas Cuartel</th>
+                <th rowspan="2">Días Presencia</th>
+                <th rowspan="2">Guardias (Asig/Cumpl)</th>
+                <th rowspan="2">% Efic. Guardia</th>
+                <th rowspan="2">Novedades</th>
+            </tr>
+            <tr>
+                <th>En Guardia</th>
+                <th>Voluntarias</th>
+                <th>TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in informe %}
+            <tr>
+                <td>{{ item.obj.numero }}</td>
+                <td style="text-align: left; min-width: 200px;"><strong>{{ item.obj.apellido }}, {{ item.obj.nombre }}</strong></td>
+                
+                <td class="col-guardia">{{ item.salidas_guardia }}</td>
+                <td class="col-voluntaria">{{ item.salidas_voluntarias }}</td>
+                <td class="col-total">{{ item.total_salidas }}</td>
+                
+                <td>{{ item.horas }} hs</td>
+                <td>{{ item.dias }}</td>
+                
+                <td>{{ item.planificadas }} / {{ item.cumplidas }}</td>
+                <td class="{% if item.porcentaje_guardia < 70 %}negativo{% else %}positivo{% endif %}">
+                    {{ item.porcentaje_guardia }}%
+                </td>
+                
+                <td>
+                    {% if item.novedades > 0 %}
+                        <span class="novedad-icon" title="Posee {{ item.novedades }} licencias o sanciones en este período">⚠️</span>
+                    {% else %}
+                        <span style="color: #ccc;">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

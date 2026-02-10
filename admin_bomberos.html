@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración de Legajos - Bomberos Mariano Acosta</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { --rojo: #CC0000; --negro: #1a1a1a; --gris: #f4f4f4; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--gris); margin: 0; padding: 20px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; background: var(--negro); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .tools { display: flex; gap: 15px; background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #buscador { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+
+        .table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: var(--rojo); color: white; padding: 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #eee; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
+        .modal-content { background: white; margin: 2% auto; width: 90%; max-width: 800px; border-radius: 15px; overflow: hidden; }
+        
+        .tab-bar { display: flex; background: #333; }
+        .tab-btn { padding: 15px; border: none; background: none; color: #bbb; cursor: pointer; flex: 1; font-weight: bold; }
+        .tab-btn.active { background: white; color: var(--rojo); }
+        
+        .tab-content { display: none; padding: 25px; max-height: 60vh; overflow-y: auto; }
+        .tab-content.active { display: block; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .full { grid-column: span 2; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        
+        .footer { padding: 20px; background: #f9f9f9; text-align: right; }
+        .btn-save { background: #28a745; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-cancel { background: #666; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; margin-right: 10px; }
+        
+        /* Estilos para estados de baja */
+        .fila-baja { background-color: #ffebee; color: #c62828; }
+        .badge-baja { background: #dc3545; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1><i class="fa fa-users"></i> Administración de Legajos</h1>
+        <a href="/" style="color:white; text-decoration:none"><i class="fa fa-arrow-left"></i> Volver</a>
+    </div>
+
+    <div class="tools">
+        <input type="text" id="buscador" placeholder="Buscar por legajo, nombre o DNI..." onkeyup="filtrar()">
+        <button onclick="abrirModalNuevo()" class="btn-save" style="background:#28a745"><i class="fa fa-user-plus"></i> Nuevo Bombero</button>
+        <button onclick="exportarExcel()" class="btn-save" style="background:#1b5e20"><i class="fa fa-file-excel"></i> Excel</button>
+    </div>
+
+    <div class="table-container">
+        <table id="tablaB">
+            <thead>
+                <tr>
+                    <th>Legajo</th>
+                    <th>Apellido y Nombre</th>
+                    <th>Jerarquía</th>
+                    <th>DNI</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+    {% for b in bomberos %}
+    <tr class="{{ 'fila-baja' if not b.activo_operativo }}">
+        <td><strong>{{ b.numero }}</strong></td>
+        <td>{{ b.apellido.upper() }}, {{ b.nombre }}</td>
+        <td>{{ b.jerarquia.nombre if b.jerarquia else 'BOMBERO' }}</td>
+        <td>{{ b.dni }}</td>
+        <td>
+            {% if b.activo_operativo %}
+                <span style="color: #28a745; font-weight: bold;">● ACTIVO</span>
+            {% else %}
+                <span class="badge-baja"><i class="fa fa-user-slash"></i> INACTIVO</span>
+            {% endif %}
+        </td>
+        <td>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-save" style="background:#0056b3; padding: 8px 12px;" title="Editar Legajo"
+                        onclick='abrirModal({{ b | tojson_bombero | safe }})'>
+                    <i class="fa fa-edit"></i>
+                </button>
+
+                {% if b.activo_operativo %}
+                <a href="/admin/bombero/baja/{{ b.numero }}" 
+                   onclick="return confirm('¿Confirma dar de BAJA al legajo {{ b.numero }}?')" 
+                   class="btn-save" 
+                   style="background:#dc3545; text-decoration:none; padding: 8px 12px; display: inline-flex; align-items: center;"
+                   title="Dar de Baja">
+                    <i class="fa fa-trash"></i>
+                </a>
+                {% else %}
+                <a href="/admin/bombero/alta_logica/{{ b.numero }}" 
+                   onclick="return confirm('¿Desea REINCORPORAR al legajo {{ b.numero }}?')"
+                   class="btn-save" 
+                   style="background:#28a745; text-decoration:none; padding: 8px 12px; display: inline-flex; align-items: center;"
+                   title="Reincorporar Personal">
+                    <i class="fa fa-user-check"></i>
+                </a>
+                {% endif %}
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+        </table>
+    </div>
+
+    <div id="modalL" class="modal">
+        <div class="modal-content">
+            <div class="tab-bar">
+                <button class="tab-btn active" onclick="cambiarTab(event, 't1')">Personales</button>
+                <button class="tab-btn" onclick="cambiarTab(event, 't2')">Institucional</button>
+                <button class="tab-btn" onclick="cambiarTab(event, 't3')">Laboral/Estudios</button>
+                <button class="tab-btn" onclick="cambiarTab(event, 't4')">Encuesta</button>
+            </div>
+
+            <form id="fEdit" method="POST">
+                <div id="t1" class="tab-content active">
+                    <div class="grid">
+                        <div class="form-group" id="contenedorLegajo">
+                            <label>Legajo (Número)</label>
+                            <input type="text" name="numero" id="in0" readonly>
+                        </div>
+                        <div class="form-group"><label>DNI</label><input type="text" name="dni" id="in3"></div>
+                        <div class="form-group"><label>Nombre</label><input type="text" name="nombre" id="in1"></div>
+                        <div class="form-group"><label>Apellido</label><input type="text" name="apellido" id="in2"></div>
+                        <div class="form-group"><label>Nacimiento</label><input type="text" name="fecha_nacimiento" id="in4"></div>
+                        <div class="form-group full"><label>Domicilio</label><input type="text" name="domicilio" id="in5"></div>
+                        <div class="form-group"><label>Teléfono</label><input type="text" name="telefono" id="in6"></div>
+                        <div class="form-group"><label>Email</label><input type="text" name="email" id="in7"></div>
+                    </div>
+                </div>
+
+                <div id="t2" class="tab-content">
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Jerarquía</label>
+                            <select name="jerarquia_id" id="in8">
+                                {% for j in jerarquias %}
+                                <option value="{{ j.id }}">{{ j.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Fecha Ingreso</label><input type="text" name="fecha_ingreso" id="in9"></div>
+                        <div class="form-group"><label>¿Es Chofer?</label><input type="text" name="es_chofer_institucion" id="in10"></div>
+                        <div class="form-group full"><label>Vehículos que maneja</label><textarea name="vehiculos_maneja_bomberos" id="in12"></textarea></div>
+                    </div>
+                </div>
+
+                <div id="t3" class="tab-content">
+                    <div class="grid">
+                        <div class="form-group"><label>Situación Laboral</label><input type="text" name="situacion_laboral" id="in13"></div>
+                        <div class="form-group"><label>Profesión</label><input type="text" name="profesion_oficio" id="in14"></div>
+                        <div class="form-group full"><label>Nivel Estudios</label><input type="text" name="nivel_estudios" id="in15"></div>
+                        <div class="form-group full"><label>Horarios</label><textarea name="horarios_laborales" id="in16"></textarea></div>
+                    </div>
+                </div>
+
+                <div id="t4" class="tab-content">
+                    <label>Composición Familiar</label><textarea name="composicion_familia" id="in17" rows="2"></textarea><br><br>
+                    <label>Sugerencias</label><textarea name="sugerencias_mejorar" id="in18" rows="2"></textarea><br><br>
+                    <label>Experiencia</label><textarea name="experiencia_compartir" id="in19" rows="2"></textarea>
+                </div>
+
+                <div class="footer">
+                    <button type="button" class="btn-cancel" onclick="cerrar()">Cerrar</button>
+                    <button type="submit" class="btn-save">Guardar Datos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function cambiarTab(e, n) {
+            let t = document.getElementsByClassName("tab-content");
+            for (let i=0; i<t.length; i++) t[i].style.display = "none";
+            let b = document.getElementsByClassName("tab-btn");
+            for (let i=0; i<b.length; i++) b[i].classList.remove("active");
+            document.getElementById(n).style.display = "block";
+            e.currentTarget.classList.add("active");
+        }
+
+        // Función para EDITAR bombero existente
+        function abrirModal(b) {
+            document.getElementById('fEdit').action = "/admin/bombero/editar/" + b.numero;
+            document.getElementById('in0').value = b.numero;
+            document.getElementById('in0').readOnly = true;
+            document.getElementById('in1').value = b.nombre || '';
+            document.getElementById('in2').value = b.apellido || '';
+            document.getElementById('in3').value = b.dni || '';
+            document.getElementById('in4').value = b.fecha_nacimiento || '';
+            document.getElementById('in5').value = b.domicilio || '';
+            document.getElementById('in6').value = b.telefono || '';
+            document.getElementById('in7').value = b.email || '';
+            document.getElementById('in8').value = b.jerarquia_id || '';
+            document.getElementById('in9').value = b.fecha_ingreso || '';
+            document.getElementById('in10').value = b.es_chofer_institucion || '';
+            document.getElementById('in12').value = b.vehiculos_maneja_bomberos || '';
+            document.getElementById('in13').value = b.situacion_laboral || '';
+            document.getElementById('in14').value = b.profesion_oficio || '';
+            document.getElementById('in15').value = b.nivel_estudios || '';
+            document.getElementById('in16').value = b.horarios_laborales || '';
+            document.getElementById('in17').value = b.composicion_familia || '';
+            document.getElementById('in18').value = b.sugerencias_mejorar || '';
+            document.getElementById('in19').value = b.experiencia_compartir || '';
+            document.getElementById('modalL').style.display = 'block';
+        }
+
+        // Función para NUEVO bombero
+        function abrirModalNuevo() {
+            document.getElementById('fEdit').reset();
+            document.getElementById('fEdit').action = "/admin/bombero/nuevo";
+            document.getElementById('in0').readOnly = false;
+            document.getElementById('in0').placeholder = "Ingrese Legajo";
+            document.getElementById('modalL').style.display = 'block';
+        }
+
+        function cerrar() { document.getElementById('modalL').style.display = 'none'; }
+
+        function filtrar() {
+            let q = document.getElementById("buscador").value.toLowerCase();
+            let f = document.querySelectorAll("#tablaB tbody tr");
+            f.forEach(r => { 
+                r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none"; 
+            });
+        }
+
+        function exportarExcel() {
+            let t = document.getElementById('tablaB');
+            let wb = XLSX.utils.table_to_book(t, {sheet:"Personal"});
+            XLSX.writeFile(wb, "Personal_MA.xlsx");
+        }
+    </script>
+</body>
+</html>

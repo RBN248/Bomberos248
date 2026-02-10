@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Administración de Flota - S.O.B.</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --rojo: #CC0000; --oscuro: #121212; --gris: #2a2a2a; --verde: #28a745; --oro: #ffc107; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--oscuro); color: white; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .panel { background: #1e1e1e; border-radius: 10px; border: 1px solid #333; padding: 20px; margin-bottom: 20px; }
+        h2 { color: var(--rojo); border-bottom: 2px solid var(--rojo); padding-bottom: 10px; margin-top: 0; }
+        
+        .form-alta { display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; align-items: flex-end; }
+        input, select { background: #2a2a2a; border: 1px solid #444; color: white; padding: 10px; border-radius: 5px; }
+        
+        .btn { padding: 10px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; border: none; text-decoration: none; display: inline-block; text-align: center; }
+        .btn-red { background: var(--rojo); color: white; }
+        .btn-dark { background: #444; color: white; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid #333; color: var(--oro); }
+        td { padding: 12px; border-bottom: 1px solid #222; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+        .badge-active { background: var(--verde); color: white; }
+        .badge-baja { background: #666; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h1 style="margin:0;">⚙️ Gestión de Unidades</h1>
+            <a href="/admin" class="btn btn-dark">🏠 VOLVER AL PANEL (Adm)</a>
+        </div>
+
+        <div class="panel">
+            <h2><i class="fa fa-plus-circle"></i> Nueva Unidad</h2>
+            <form method="POST" class="form-alta">
+                <div>
+                    <label style="display:block; font-size:0.8em; margin-bottom:5px;">NÚMERO:</label>
+                    <input type="text" name="numero" placeholder="Ej: 32" required>
+                </div>
+                <div>
+                    <label style="display:block; font-size:0.8em; margin-bottom:5px;">DESCRIPCIÓN:</label>
+                    <input type="text" name="descripcion" placeholder="Ej: UNIDAD DE RESCATE" required>
+                </div>
+                <button type="submit" name="nuevo" class="btn btn-red">DAR DE ALTA</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <h2><i class="fa fa-truck-moving"></i> Flota Institucional</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>NRO</th>
+                        <th>DESCRIPCIÓN</th>
+                        <th>ESTADO</th>
+                        <th style="text-align:right;">ACCIÓN</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in moviles %}
+                    <tr>
+                        <td><b>{{ m.numero }}</b></td>
+                        <td>{{ m.descripcion }}</td>
+                        <td>
+                            <span class="badge {{ 'badge-active' if m.estado == 'Activo' else 'badge-baja' }}">
+                                {{ m.estado }}
+                            </span>
+                        </td>
+                        <td style="text-align:right;">
+                            <form method="POST" style="display:inline;">
+                                <input type="hidden" name="movil_id" value="{{ m.id }}">
+                                <button type="submit" name="cambiar_estado" class="btn btn-dark" style="font-size:0.8em;">
+                                    {{ 'DESACTIVAR' if m.estado == 'Activo' else 'REACTIVAR' }}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

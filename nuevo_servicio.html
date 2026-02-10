@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Nueva Alarma - Bomberos Mariano Acosta</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #222; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            padding: 20px;
+        }
+        .form-card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+            width: 100%;
+            max-width: 550px; 
+            border-top: 10px solid #CC0000; 
+            box-sizing: border-box;
+        }
+        h2 { 
+            color: #CC0000; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            letter-spacing: -1px; 
+            text-transform: uppercase;
+        }
+        .section-title {
+            background: #f8f8f8;
+            padding: 8px 12px;
+            border-left: 4px solid #CC0000;
+            margin: 20px 0 15px 0;
+            font-weight: bold;
+            color: #333;
+            font-size: 0.9em;
+        }
+        label { 
+            font-weight: bold; 
+            color: #555; 
+            display: block; 
+            margin-bottom: 5px; 
+            font-size: 0.85em;
+        }
+        input, select { 
+            width: 100%; 
+            padding: 10px; 
+            margin-bottom: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-size: 1em; 
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #CC0000;
+            box-shadow: 0 0 5px rgba(204,0,0,0.2);
+        }
+        .grid-denuncia {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn-submit { 
+            background: #CC0000; 
+            color: white; 
+            border: none; 
+            padding: 15px; 
+            width: 100%; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 1.1em; 
+            transition: 0.3s; 
+            margin-top: 10px;
+        }
+        .btn-submit:hover { 
+            background: #990000; 
+            transform: translateY(-2px); 
+        }
+        .cancelar { 
+            display: block; 
+            text-align: center; 
+            margin-top: 15px; 
+            color: #777; 
+            text-decoration: none; 
+            font-size: 0.9em; 
+        }
+    </style>
+</head>
+<body>
+    <div class="form-card">
+        <h2>🚨 DESPACHO DE SERVICIO</h2>
+        
+        <form method="post">
+            <div class="section-title"><i class="fa fa-user-shield"></i> DATOS DEL DENUNCIANTE</div>
+            
+            <label>Nombre y Apellido:</label>
+            <input name="denunciante_nombre" placeholder="Quién dio el aviso" required autofocus>
+            
+            <div class="grid-denuncia">
+                <div>
+                    <label>Teléfono de contacto:</label>
+                    <input name="denunciante_tel" placeholder="Ej: 11..." required>
+                </div>
+                <div>
+                    <label>Hora de la llamada:</label>
+                    <input type="time" name="hora_denuncia_str" required>
+                </div>
+            </div>
+
+            <div class="section-title"><i class="fa fa-map-marker-alt"></i> DETALLES DEL SINIESTRO</div>
+
+            <label>Número de Acta / Registro:</label>
+            <input name="nro_acta" placeholder="Ej: 145/2025" required>
+            
+            <label>Tipo de Siniestro:</label>
+            <select name="tipo" required>
+                <option value="" disabled selected>Seleccione la categoría...</option>
+                <optgroup label="INCENDIOS">
+                    <option value="Incendio de Casa">Incendio de Casa</option>
+                    <option value="Incendio de Auto">Incendio de Auto</option>
+                    <option value="Incendio de Campo">Incendio de Campo</option>
+                    <option value="Incendio Otro">Incendio Otro</option>
+                </optgroup>
+                <optgroup label="AUXILIOS">
+                    <option value="Accidente de Tránsito">Accidente de Tránsito</option>
+                    <option value="Rescate en Vía Pública">Rescate en Vía Pública</option>
+                    <option value="Rescate en Domicilio">Rescate en Domicilio</option>
+                    <option value="Rescate de Animal">Rescate de Animal</option>
+                    <option value="Accidente Ferroviario">Accidente Ferroviario</option>
+                    <option value="Auxilio Otro">Otro Auxilio</option>
+                </optgroup>
+                <optgroup label="COLABORACIÓN">
+                    <option value="Colaboración Cuerpos Vecinos">A Cuerpos Vecinos</option>
+                    <option value="Colaboración Federación">A la Federación</option>
+                    <option value="Colaboración Otro">Otros</option>
+                </optgroup>
+                <optgroup label="OTROS">
+                    <option value="Cursos Federativos">Cursos Federativos</option>
+                    <option value="Cursos Especiales">Cursos Especiales</option>
+                    <option value="Representación">Representación</option>
+                    <option value="Ceremonial/Protocolo">Ceremonial/Protocolo</option>
+                    <option value="Materiales Peligrosos">Materiales Peligrosos</option>
+                    <option value="Guardias">Guardias</option>
+                    <option value="Comando">Comando</option>
+                </optgroup>
+            </select>
+            
+            <label>Ubicación / Dirección:</label>
+            <input name="ubicacion" placeholder="Ej: Av. Argentina y Calle 10" required>
+            
+            <button type="submit" class="btn-submit">DESPACHAR MÓVILES</button>
+        </form>
+        <a href="/" class="cancelar">✖️ Cancelar y volver al tablero</a>
+    </div>
+</body>
+</html>

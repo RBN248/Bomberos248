@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cierre de Parte - Acta {{ parte.nro_acta }}</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; padding: 20px; color: #333; }
+        .container { max-width: 850px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border-top: 10px solid #28a745; }
+        
+        h2 { color: #28a745; margin-top: 0; display: flex; align-items: center; gap: 10px; }
+        .info-acta { background: #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 5px solid #6c757d; }
+        
+        .section-title { background: #343a40; color: white; padding: 10px 15px; font-weight: bold; margin: 25px 0 15px 0; border-radius: 5px; text-transform: uppercase; font-size: 0.9em; letter-spacing: 1px; }
+        
+        label { display: block; font-weight: bold; margin-bottom: 8px; color: #444; }
+        
+        textarea { 
+            width: 100%; 
+            height: 120px; 
+            padding: 12px; 
+            border-radius: 8px; 
+            border: 1px solid #ccc; 
+            box-sizing: border-box; 
+            font-family: inherit; 
+            font-size: 1em;
+            margin-bottom: 20px;
+            resize: vertical;
+        }
+        
+        textarea:focus, input:focus { outline: none; border-color: #28a745; box-shadow: 0 0 5px rgba(40,167,69,0.2); }
+
+        .grid-externos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border-radius: 8px; 
+            border: 1px solid #ccc; 
+            box-sizing: border-box; 
+            font-size: 0.95em;
+        }
+
+        .footer-actions { margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px; display: flex; gap: 15px; }
+        
+        .btn-save { 
+            background: #28a745; 
+            color: white; 
+            border: none; 
+            padding: 15px 40px; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 1.1em; 
+            flex: 2;
+            transition: 0.3s;
+        }
+        
+        .btn-save:hover { background: #218838; box-shadow: 0 4px 12px rgba(40,167,69,0.3); }
+        
+        .btn-cancel { 
+            background: #6c757d; 
+            color: white; 
+            text-decoration: none; 
+            padding: 15px; 
+            border-radius: 8px; 
+            text-align: center; 
+            font-weight: bold;
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>✅ CIERRE OPERATIVO DE SERVICIO</h2>
+    
+    <div class="info-acta">
+        <strong>ACTA NRO:</strong> {{ parte.nro_acta }} | 
+        <strong>TIPO:</strong> {{ parte.tipo_siniestro }} | 
+        <strong>UBICACIÓN:</strong> {{ parte.ubicacion }}
+    </div>
+
+    <form method="POST">
+        <div class="section-title">📝 Informe del Jefe de Servicio</div>
+        
+        <label>Panorama del Servicio:</label>
+        <textarea name="panorama" placeholder="Describa el panorama encontrado por la primera dotación al arribar...">
+            {{ parte.panorama if parte.panorama }}
+        </textarea>
+
+        <label>Disposiciones y Tareas:</label>
+        <textarea name="disposiciones" placeholder="Detalle las tareas realizadas, líneas de ataque, entradas forzadas, rescates, etc...">
+            {{ parte.disposiciones if parte.disposiciones }}
+        </textarea>
+
+        <div class="section-title">🚑 Personal Externo en el lugar</div>
+        <div class="grid-externos">
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                <label>Policía:</label>
+                <input name="pol_movil" value="{{ parte.pol_movil if parte.pol_movil }}" placeholder="Móvil" style="margin-bottom:5px;">
+                <input name="pol_cargo" value="{{ parte.pol_cargo if parte.pol_cargo }}" placeholder="Cargo/Personal" style="margin-bottom:5px;">
+                <input name="pol_obs" value="{{ parte.pol_obs if parte.pol_obs }}" placeholder="Observaciones">
+            </div>
+    
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                <label>Ambulancia:</label>
+                <input name="amb_movil" value="{{ parte.amb_movil if parte.amb_movil }}" placeholder="Móvil" style="margin-bottom:5px;">
+                <input name="amb_cargo" value="{{ parte.amb_cargo if parte.amb_cargo }}" placeholder="Médico/Personal" style="margin-bottom:5px;">
+                <input name="amb_obs" value="{{ parte.amb_obs if parte.amb_obs }}" placeholder="Observaciones">
+            </div>
+
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                <label>Defensa Civil / Otros:</label>
+                <input name="dc_movil" value="{{ parte.dc_movil if parte.dc_movil }}" placeholder="Móvil" style="margin-bottom:5px;">
+                <input name="dc_cargo" value="{{ parte.dc_cargo if parte.dc_cargo }}" placeholder="Personal" style="margin-bottom:5px;">
+                <input name="dc_obs" value="{{ parte.dc_obs if parte.dc_obs }}" placeholder="Observaciones">
+            </div>
+        </div>
+
+        <div class="footer-actions">
+            <a href="/" class="btn-cancel">VOLVER SIN CERRAR</a>
+            <button type="submit" class="btn-save">FINALIZAR Y ARCHIVAR PARTE</button>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

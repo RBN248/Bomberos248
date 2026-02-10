@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Archivo de Servicios - Bomberos</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; padding: 30px; }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h2 { color: #CC0000; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .tabla-archivo { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .tabla-archivo th { background: #333; color: white; padding: 12px; text-align: left; }
+        .tabla-archivo td { padding: 12px; border-bottom: 1px solid #ddd; font-size: 0.9em; }
+        
+        /* Estilo para la fila de detalles */
+        .fila-detalle { background: #fafafa; }
+        .box-informe { 
+            padding: 15px; 
+            border-left: 4px solid #CC0000; 
+            margin: 5px 0;
+            background: #fff;
+            border-radius: 0 5px 5px 0;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+        }
+        .box-informe p { margin: 5px 0; line-height: 1.4; }
+
+        .btn-ver { background: #eee; color: #333; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-weight: bold; border: 1px solid #ccc; }
+        .btn-ver:hover { background: #ddd; }
+        
+        .tag-tipo { padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
+        .incendio { background: #ffebee; color: #c62828; }
+        .auxilio { background: #e3f2fd; color: #1565c0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>🗄️ Historial de Servicios Finalizados</h2>
+            <a href="/" style="text-decoration: none; color: #666; font-weight: bold;">⬅️ Volver al Panel</a>
+        </div>
+
+        <table class="tabla-archivo">
+            <thead>
+                <tr>
+                    <th>Acta</th>
+                    <th>Fecha / Hora</th>
+                    <th>Tipo de Siniestro</th>
+                    <th>Ubicación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in servicios %}
+                <tr>
+                    <td><strong>{{ s.nro_acta }}</strong></td>
+                    <td>{{ s.hora_alarma.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td><span class="tag-tipo {% if 'Incendio' in s.tipo_siniestro %}incendio{% else %}auxilio{% endif %}">{{ s.tipo_siniestro }}</span></td>
+                    <td>{{ s.ubicacion }}</td>
+                    <td>
+                        <a href="/servicio/{{ s.id }}/gestion" class="btn-ver">👁️ Ver / Editar</a>
+                    </td>
+                </tr>
+                <tr class="fila-detalle">
+                    <td colspan="5">
+                        <div class="box-informe">
+                            <p><strong>PANORAMA:</strong> {{ s.panorama if s.panorama else 'Sin información registrada' }}</p>
+                            <p><strong>DISPOSICIONES:</strong> {{ s.disposiciones if s.disposiciones else 'Sin información registrada' }}</p>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align: center; color: #999; padding: 40px;">No hay servicios archivados todavía.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

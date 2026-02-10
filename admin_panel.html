@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Administración - S.O.B.</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --rojo: #CC0000; --oscuro: #121212; --gris: #2a2a2a; --oro: #ffc107; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--oscuro); color: white; padding: 20px; }
+        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1000px; margin: 40px auto; }
+        .admin-card { background: #1e1e1e; border: 1px solid #333; padding: 30px; border-radius: 12px; text-align: center; text-decoration: none; color: white; transition: 0.3s; }
+        .admin-card:hover { border-color: var(--rojo); background: #252525; transform: translateY(-5px); }
+        .admin-card i { font-size: 3em; color: var(--rojo); margin-bottom: 15px; }
+        .admin-card h3 { margin: 10px 0; color: var(--oro); }
+        .btn-volver { position: absolute; top: 20px; left: 20px; background: #333; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <a href="/" class="btn-volver"><i class="fa fa-arrow-left"></i> VOLVER AL PANEL</a>
+    <h1 style="text-align:center; margin-top:50px;">⚙️ Centro de Administración</h1>
+    
+    <div class="admin-grid">
+        <a href="/admin/bomberos" class="admin-card">
+            <i class="fa fa-users"></i>
+            <h3>PERSONAL</h3>
+            <p>Altas, bajas y legajos</p>
+        </a>
+        <a href="/admin/moviles" class="admin-card">
+            <i class="fa fa-truck-moving"></i>
+            <h3>MÓVILES</h3>
+            <p>Gestión de la flota</p>
+        </a>
+        <a href="/admin/partes" class="admin-card">
+            <i class="fa fa-file-invoice"></i>
+            <h3>HISTORIAL DE PARTES</h3>
+            <p>Ver y modificar servicios</p>
+        </a>
+        <a href="/admin/usuarios" class="admin-card">
+            <i class="fa fa-key"></i>
+            <h3>USUARIOS</h3>
+            <p>Claves y permisos</p>
+        </a>
+    </div>
+</body>
+</html>

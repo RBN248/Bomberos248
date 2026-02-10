@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>S.O.B. - Bomberos Mariano Acosta</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --rojo: #CC0000; --oscuro: #121212; --gris: #2a2a2a; --verde: #28a745; --oro: #ffc107; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--oscuro); margin: 0; color: white; height: 100vh; overflow: hidden; }
+        
+        .navbar { background: #000; padding: 10px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--rojo); }
+        
+        .main-layout { display: grid; grid-template-columns: 1fr 380px; gap: 15px; padding: 15px; height: calc(100vh - 70px); box-sizing: border-box; }
+        
+        .panel { background: #1e1e1e; border-radius: 10px; display: flex; flex-direction: column; border: 1px solid #333; overflow: hidden; }
+        .panel-header { background: #252525; padding: 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .scroll-area { flex-grow: 1; overflow-y: auto; padding: 15px; }
+
+        /* Tarjetas de Siniestro Estilo Despacho */
+        .siniestro-card { background: #2d2d2d; border-radius: 8px; margin-bottom: 15px; border-left: 10px solid var(--rojo); position: relative; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .siniestro-card h3 { margin: 0; color: var(--rojo); font-size: 1.4em; }
+        
+        .denuncia-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; margin: 10px 0; border: 1px dashed #555; font-size: 0.9em; display: flex; gap: 20px; }
+        
+        .dotacion-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 15px; }
+        .unidad-mini { background: #3d3d3d; padding: 8px; border-radius: 5px; border: 1px solid #555; font-size: 0.85em; }
+        .badge-m { background: var(--rojo); padding: 2px 6px; border-radius: 3px; font-weight: bold; margin-bottom: 5px; display: inline-block; }
+
+        /* Personal List */
+        .tabla-pers { width: 100%; border-collapse: collapse; }
+        .tabla-pers tr { border-bottom: 1px solid #333; }
+        .tabla-pers td { padding: 10px 5px; }
+        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; }
+
+        .btn { padding: 8px 15px; border-radius: 5px; text-decoration: none; font-weight: bold; color: white; transition: 0.3s; border: none; cursor: pointer; }
+        .btn-red { background: var(--rojo); }
+        .btn-green { background: var(--verde); }
+        .btn-dark { background: #444; }
+        .btn:hover { filter: brightness(1.2); transform: scale(1.02); }
+
+        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        .emergencia-anim { color: var(--rojo); animation: pulse-red 1s infinite; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <i class="fa fa-fire-extinguisher" style="font-size:2em; color:var(--rojo);"></i>
+            <div>
+                <b style="letter-spacing:1px;">B.V. MARIANO ACOSTA</b><br>
+                <small style="color:#aaa;">SISTEMA OPERATIVO DE BASE</small>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <a href="/monitor_operativo" target="_blank" class="btn btn-dark">🖥️ MONITOR</a>
+
+            {% if user.rol == 'Jefe' %}
+                <a href="/admin" class="btn btn-dark" style="color:var(--oro);">⚙️ ADMIN</a>
+            {% endif %}
+            
+            <a href="/logout" class="btn btn-dark">SALIR</a>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        
+        <div class="panel">
+            <div class="panel-header">
+                <h2 style="margin:0;"><i class="fa fa-broadcast-tower"></i> SERVICIOS ACTIVOS</h2>
+                <a href="/servicio/nuevo" class="btn btn-red">+ NUEVA ALARMA</a>
+            </div>
+            <div class="scroll-area">
+                {% for p in partes %}
+                <div class="siniestro-card">
+                    <div style="display:flex; justify-content:space-between;">
+                        <h3>ACTA #{{ p.nro_acta }} | {{ p.tipo_siniestro }}</h3>
+                        <span style="font-weight:bold; color:var(--oro);">{{ p.hora_alarma.strftime('%H:%M') }} hs</span>
+                    </div>
+                    
+                    <div style="margin:5px 0;"><b>UBICACIÓN:</b> {{ p.ubicacion }}</div>
+
+                    <div class="denuncia-box">
+                        <span><i class="fa fa-phone"></i> <b>DENUNCIA:</b> {{ p.hora_denuncia.strftime('%H:%M') if p.hora_denuncia else '--:--' }}</span>
+                        <span><b>AVISÓ:</b> {{ p.denunciante_nombre }} ({{ p.denunciante_tel }})</span>
+                    </div>
+
+                    <div class="dotacion-grid">
+                        {% for d in p.id | get_dotacion_completa %}
+                        <div class="unidad-mini">
+                            <span class="badge-m">MÓVIL {{ d.movil.numero }}</span><br>
+                            <b>{{ d.rol_en_unidad }}:</b><br>
+                            {{ d.bombero.apellido if d.bombero else 'No asignado' }}
+                            <div style="margin-top:5px; color:var(--verde); font-size:0.8em;">
+                                <i class="fa fa-clock"></i> Arribo: {{ d.hora_llegada.strftime('%H:%M') if d.hora_llegada else 'En viaje' }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div style="margin-top:15px; display:flex; gap:10px;">
+                        <a href="/servicio/{{ p.id }}/gestion" class="btn btn-dark">⚙️ DOTACIÓN</a>
+                        <a href="/servicio/{{ p.id }}/finalizar" class="btn btn-green">🏁 FINALIZAR</a>
+                    </div>
+                </div>
+                {% else %}
+                <div style="text-align:center; padding:50px; color:#555;">
+                    <i class="fa fa-shield-alt" style="font-size:4em;"></i>
+                    <p>SIN NOVEDADES OPERATIVAS</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h2 style="margin:0;"><i class="fa fa-users"></i> EN CUARTEL</h2>
+                <span style="background:var(--rojo); padding:2px 10px; border-radius:15px;">{{ total_presentes }}</span>
+            </div>
+            <div style="padding:15px; border-bottom:1px solid #333;">
+                <a href="/asistencia" class="btn btn-dark" style="width:100%; display:block;">REGISTRAR MOVIMIENTO</a>
+            </div>
+            <div class="scroll-area">
+                <table class="tabla-pers">
+                    {% for pres in presentes %}
+                    <tr>
+                        <td>
+                            <small style="color:var(--oro); font-weight:bold; font-size:0.7em;">{{ pres.bombero.jerarquia.nombre if pres.bombero.jerarquia else 'BOMBERO' }}</small><br>
+                            {% if pres.bombero %}
+                                <b>{{ pres.bombero.apellido.upper() }}, {{ pres.bombero.nombre }}</b>
+                            {% else %}
+                                <b>Bombero Desconocido (Legajo: {{ pres.bombero_numero }})</b>
+                            {% endif %}
+                        </td>
+                        <td style="text-align:right;">
+                            {% if pres.bombero_numero in legajos_ocupados %}
+                                <i class="fa fa-fire-extinguisher emergencia-anim" title="EN SALIDA"></i>
+                            {% else %}
+                                <span class="status-dot" style="background:var(--verde);" title="DISPONIBLE"></span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
